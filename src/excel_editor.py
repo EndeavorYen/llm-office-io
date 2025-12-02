@@ -11,8 +11,8 @@ import os
 import sys
 import argparse
 
-from openpyxl import load_workbook,  Workbook
-from openpyxl.utils import get_column_letter, coordinate_from_string
+from openpyxl import load_workbook, Workbook
+from openpyxl.utils import get_column_letter
 
 from .constants import (
     SUCCESS_SYMBOL,
