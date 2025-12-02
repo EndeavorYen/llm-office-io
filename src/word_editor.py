@@ -11,8 +11,9 @@ import sys
 import argparse
 
 from docx import Document
-from docx.shared import Pt, RGBColor
+from docx.shared import Pt, RGBColor, Inches, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
 
 from .constants import (
     MAX_PREVIEW_LENGTH,
@@ -283,6 +284,218 @@ class WordEditor:
             print(f"{ERROR_SYMBOL} 找不到標題「{heading_text}」")
             
         return found
+
+    def add_image(self, image_path: str, width_cm: float = 10.0, position: Optional[str] = None) -> bool:
+        """插入圖片
+        
+        Args:
+            image_path: 圖片檔案路徑
+            width_cm: 圖片寬度（公分）
+            position: 插入位置描述文字，None 表示文檔末尾
+            
+        Returns:
+            bool: 是否成功插入
+        """
+        if not os.path.exists(image_path):
+            print(f"{ERROR_SYMBOL} 圖片檔案不存在: {image_path}")
+            return False
+        
+        try:
+            if position:
+                # 在特定位置後插入
+                for i, para in enumerate(self.doc.paragraphs):
+                    if position in para.text:
+                        # 在段落後插入新段落並添加圖片
+                        p = para._element
+                        parent = p.getparent()
+                        new_para = self.doc.add_paragraph()
+                        parent.insert(parent.index(p) + 1, new_para._element)
+                        run = new_para.add_run()
+                        run.add_picture(image_path, width=Cm(width_cm))
+                        print(f"{SUCCESS_SYMBOL} 已在「{position}」後插入圖片")
+                        return True
+                print(f"{ERROR_SYMBOL} 找不到位置: {position}")
+                return False
+            else:
+                # 在文檔末尾插入
+                para = self.doc.add_paragraph()
+                run = para.add_run()
+                run.add_picture(image_path, width=Cm(width_cm))
+                print(f"{SUCCESS_SYMBOL} 已在文檔末尾插入圖片")
+                return True
+        except Exception as e:
+            print(f"{ERROR_SYMBOL} 插入圖片失敗: {e}")
+            return False
+    
+    def insert_table(self, rows: int, cols: int, data: Optional[List[List[str]]] = None, 
+                    position: Optional[str] = None) -> bool:
+        """插入表格
+        
+        Args:
+            rows: 行數
+            cols: 列數
+            data: 表格資料（二維列表）
+            position: 插入位置，None 表示文檔末尾
+            
+        Returns:
+            bool: 是否成功插入
+        """
+        if rows < 1 or cols < 1:
+            print(f"{ERROR_SYMBOL} 行列數必須大於 0")
+            return False
+        
+        try:
+            if position:
+                # 在特定位置後插入
+                for para in self.doc.paragraphs:
+                    if position in para.text:
+                        p = para._element
+                        parent = p.getparent()
+                        table = self.doc.add_table(rows, cols)
+                        parent.insert(parent.index(p) + 1, table._element)
+                        
+                        # 填充資料
+                        if data:
+                            for i, row_data in enumerate(data[:rows]):
+                                for j, cell_data in enumerate(row_data[:cols]):
+                                    table.rows[i].cells[j].text = str(cell_data)
+                        
+                        print(f"{SUCCESS_SYMBOL} 已插入 {rows}x{cols} 表格")
+                        return True
+                print(f"{ERROR_SYMBOL} 找不到位置: {position}")
+                return False
+            else:
+                # 在文檔末尾插入
+                table = self.doc.add_table(rows, cols)
+                
+                # 填充資料
+                if data:
+                    for i, row_data in enumerate(data[:rows]):
+                        for j, cell_data in enumerate(row_data[:cols]):
+                            table.rows[i].cells[j].text = str(cell_data)
+                
+                print(f"{SUCCESS_SYMBOL} 已在文檔末尾插入 {rows}x{cols} 表格")
+                return True
+        except Exception as e:
+            print(f"{ERROR_SYMBOL} 插入表格失敗: {e}")
+            return False
+    
+    def update_table_cell(self, table_index: int, row: int, col: int, text: str) -> bool:
+        """更新表格儲存格
+        
+        Args:
+            table_index: 表格索引（從 0 開始）
+            row: 行索引（從 0 開始）
+            col: 列索引（從 0 開始）
+            text: 新文字
+            
+        Returns:
+            bool: 是否成功更新
+        """
+        try:
+            if table_index >= len(self.doc.tables):
+                print(f"{ERROR_SYMBOL} 表格索引超出範圍（共 {len(self.doc.tables)} 個表格）")
+                return False
+            
+            table = self.doc.tables[table_index]
+            
+            if row >= len(table.rows):
+                print(f"{ERROR_SYMBOL} 行索引超出範圍（共 {len(table.rows)} 行）")
+                return False
+            
+            if col >= len(table.columns):
+                print(f"{ERROR_SYMBOL} 列索引超出範圍（共 {len(table.columns)} 列）")
+                return False
+            
+            old_text = table.rows[row].cells[col].text
+            table.rows[row].cells[col].text = text
+            print(f"{SUCCESS_SYMBOL} 已更新表格[{table_index}][{row},{col}]")
+            print(f"  舊值: {old_text}")
+            print(f"  新值: {text}")
+            return True
+        except Exception as e:
+            print(f"{ERROR_SYMBOL} 更新表格失敗: {e}")
+            return False
+    
+    def set_paragraph_format(self, search_text: str, font_size: int = 11, 
+                            bold: bool = False, italic: bool = False,
+                            alignment: Optional[str] = None) -> bool:
+        """設定段落格式
+        
+        Args:
+            search_text: 搜尋文字
+            font_size: 字體大小
+            bold: 是否粗體
+            italic: 是否斜體
+            alignment: 對齊方式 ('left', 'center', 'right', 'justify')
+            
+        Returns:
+            bool: 是否找到並設定成功
+        """
+        if not search_text:
+            print(f"{ERROR_SYMBOL} 搜尋文字不能為空")
+            return False
+        
+        found = False
+        for para in self.doc.paragraphs:
+            if search_text in para.text:
+                for run in para.runs:
+                    run.font.size = Pt(font_size)
+                    run.font.bold = bold
+                    run.font.italic = italic
+                
+                # 設定對齊
+                if alignment:
+                    alignment_map = {
+                        'left': WD_ALIGN_PARAGRAPH.LEFT,
+                        'center': WD_ALIGN_PARAGRAPH.CENTER,
+                        'right': WD_ALIGN_PARAGRAPH.RIGHT,
+                        'justify': WD_ALIGN_PARAGRAPH.JUSTIFY
+                    }
+                    if alignment in alignment_map:
+                        para.alignment = alignment_map[alignment]
+                
+                print(f"{SUCCESS_SYMBOL} 已設定段落格式: {search_text[:50]}")
+                found = True
+                break
+        
+        if not found:
+            print(f"{ERROR_SYMBOL} 找不到包含「{search_text}」的段落")
+        
+        return found
+    
+    def add_page_break(self, after_text: Optional[str] = None) -> bool:
+        """插入分頁符號
+        
+        Args:
+            after_text: 在包含此文字的段落後插入，None 表示文檔末尾
+            
+        Returns:
+            bool: 是否成功插入
+        """
+        try:
+            if after_text:
+                for para in self.doc.paragraphs:
+                    if after_text in para.text:
+                        # 在段落後插入分頁
+                        p = para._element
+                        parent = p.getparent()
+                        new_para = self.doc.add_paragraph()
+                        parent.insert(parent.index(p) + 1, new_para._element)
+                        new_para.add_run().add_break(type=6)  # Page break
+                        print(f"{SUCCESS_SYMBOL} 已在「{after_text}」後插入分頁符號")
+                        return True
+                print(f"{ERROR_SYMBOL} 找不到包含「{after_text}」的段落")
+                return False
+            else:
+                # 在文檔末尾插入
+                para = self.doc.add_paragraph()
+                para.add_run().add_break(type=6)
+                print(f"{SUCCESS_SYMBOL} 已在文檔末尾插入分頁符號")
+                return True
+        except Exception as e:
+            print(f"{ERROR_SYMBOL} 插入分頁符號失敗: {e}")
+            return False
 
 
 def main() -> None:

@@ -13,10 +13,17 @@ import argparse
 
 from openpyxl import load_workbook, Workbook
 from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font, PatternFill, Alignment
+
+try:
+    from tqdm import tqdm
+    HAS_TQDM = True
+except ImportError:
+    HAS_TQDM = False
 
 from .constants import (
     SUCCESS_SYMBOL,
-   ERROR_SYMBOL,
+    ERROR_SYMBOL,
     WARNING_SYMBOL,
     MAX_ROWS_DISPLAY,
     MAX_COLS_DISPLAY
@@ -150,7 +157,12 @@ class ExcelEditor:
         
         replaced_count = 0
         
-        for ws in sheets_to_process:
+        # 使用進度條（如果處理多個工作表）
+        iterator = sheets_to_process
+        if HAS_TQDM and len(sheets_to_process) > 1:
+            iterator = tqdm(sheets_to_process, desc="處理工作表", leave=False)
+        
+        for ws in iterator:
             for row in ws.iter_rows():
                 for cell in row:
                     if cell.value and isinstance(cell.value, str) and old_text in cell.value:
@@ -293,6 +305,134 @@ class ExcelEditor:
             print(f"{ERROR_SYMBOL} 找不到包含「{search_text}」的儲存格")
         
         return results
+
+    def add_sheet(self, sheet_name: str, position: Optional[int] = None) -> bool:
+        """新增工作表
+        
+        Args:
+            sheet_name: 工作表名稱
+            position: 插入位置，None 表示最後
+            
+        Returns:
+            bool: 是否成功新增
+        """
+        if sheet_name in self.wb.sheetnames:
+            print(f"{ERROR_SYMBOL} 工作表「{sheet_name}」已存在")
+            return False
+        
+        try:
+            if position is None:
+                self.wb.create_sheet(sheet_name)
+            else:
+                self.wb.create_sheet(sheet_name, position)
+            
+            print(f"{SUCCESS_SYMBOL} 已新增工作表: {sheet_name}")
+            return True
+        except Exception as e:
+            print(f"{ERROR_SYMBOL} 新增工作表失敗: {e}")
+            return False
+    
+    def delete_sheet(self, sheet_name: str) -> bool:
+        """刪除工作表
+        
+        Args:
+            sheet_name: 工作表名稱
+            
+        Returns:
+            bool: 是否成功刪除
+        """
+        if not self._validate_sheet_name(sheet_name):
+            return False
+        
+        if len(self.wb.sheetnames) == 1:
+            print(f"{ERROR_SYMBOL} 無法刪除唯一的工作表")
+            return False
+        
+        try:
+            del self.wb[sheet_name]
+            print(f"{SUCCESS_SYMBOL} 已刪除工作表: {sheet_name}")
+            return True
+        except Exception as e:
+            print(f"{ERROR_SYMBOL} 刪除工作表失敗: {e}")
+            return False
+    
+    def set_cell_format(
+        self,
+        sheet_name: str,
+        cell_ref: str,
+        bold: bool = False,
+        font_size: int = 11,
+        bg_color: Optional[str] = None,
+        alignment: Optional[str] = None
+    ) -> bool:
+        """設定儲存格格式
+        
+        Args:
+            sheet_name: 工作表名稱
+            cell_ref: 儲存格參照 (如 A1)
+            bold: 是否粗體
+            font_size: 字體大小
+            bg_color: 背景顏色 (16進位，如 'FFFF00' 為黃色)
+            alignment: 對齊方式 ('left', 'center', 'right')
+            
+        Returns:
+            bool: 是否成功設定
+        """
+        if not self._validate_sheet_name(sheet_name):
+            return False
+        
+        try:
+            ws = self.wb[sheet_name]
+            cell = ws[cell_ref]
+            
+            # 設定字體
+            cell.font = Font(bold=bold, size=font_size)
+            
+            # 設定背景色
+            if bg_color:
+                cell.fill = PatternFill(
+                    start_color=bg_color,
+                    end_color=bg_color,
+                    fill_type="solid"
+                )
+            
+            # 設定對齊
+            if alignment:
+                cell.alignment = Alignment(horizontal=alignment)
+            
+            print(f"{SUCCESS_SYMBOL} 已設定 {sheet_name}!{cell_ref} 的格式")
+            return True
+        except Exception as e:
+            print(f"{ERROR_SYMBOL} 設定格式失敗: {e}")
+            return False
+    
+    def set_formula(
+        self,
+        sheet_name: str,
+        cell_ref: str,
+        formula: str
+    ) -> bool:
+        """設定儲存格公式
+        
+        Args:
+            sheet_name: 工作表名稱
+            cell_ref: 儲存格參照 (如 A1)
+            formula: 公式 (如 '=SUM(A1:A10)')
+            
+        Returns:
+            bool: 是否成功設定
+        """
+        if not self._validate_sheet_name(sheet_name):
+            return False
+        
+        try:
+            ws = self.wb[sheet_name]
+            ws[cell_ref] = formula
+            print(f"{SUCCESS_SYMBOL} 已設定公式: {cell_ref} = {formula}")
+            return True
+        except Exception as e:
+            print(f"{ERROR_SYMBOL} 設定公式失敗: {e}")
+            return False
     
     def _validate_sheet_name(self, sheet_name: str) -> bool:
         """驗證工作表名稱是否存在

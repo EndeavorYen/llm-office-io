@@ -12,8 +12,8 @@ import sys
 import argparse
 
 from pptx import Presentation
-from pptx.util import Pt, Inches
-from pptx.enum.text import PP_ALIGN
+from pptx.util import Inches, Pt, Cm
+from pptx.enum.shapes import MSO_SHAPE
 from pptx.dml.color import RGBColor
 
 from .constants import (
