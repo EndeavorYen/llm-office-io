@@ -1,0 +1,187 @@
+{
+  "tools": [
+    {
+      "name": "replace_text",
+      "description": "替換 Office 文檔中的文字（自動判斷檔案類型：Word/PowerPoint/Excel）",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "檔案路徑 (.docx, .pptx, .xlsx)"
+          },
+          "old_text": {
+            "type": "string",
+            "description": "要替換的文字"
+          },
+          "new_text": {
+            "type": "string",
+            "description": "新文字"
+          },
+          "output_path": {
+            "type": "string",
+            "description": "輸出路徑（可選，預設覆蓋原檔案）"
+          }
+        },
+        "required": ["file_path", "old_text", "new_text"]
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "operation": {"type": "string"},
+          "file_type": {"type": "string", "enum": ["word", "ppt", "excel"]},
+          "result": {
+            "type": "object",
+            "properties": {
+              "count": {"type": "integer", "description": "替換次數"}
+            }
+          },
+          "message": {"type": "string"},
+          "error": {"type": "string", "nullable": true}
+        }
+      }
+    },
+    {
+      "name": "add_image",
+      "description": "在 Word 或 PowerPoint 文檔中插入圖片",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "檔案路徑 (.docx, .pptx)"
+          },
+          "image_path": {
+            "type": "string",
+            "description": "圖片路徑"
+          },
+          "width_cm": {
+            "type": "number",
+            "description": "圖片寬度（公分），預設 10.0",
+            "default": 10.0
+          },
+          "position": {
+            "type": "string",
+            "description": "Word: 插入位置文字（可選）"
+          },
+          "slide_number": {
+            "type": "integer",
+            "description": "PPT: 投影片編號（從 1 開始）"
+          },
+          "left_cm": {
+            "type": "number",
+            "description": "PPT: 左邊距（公分），預設 2.0",
+            "default": 2.0
+          },
+          "top_cm": {
+            "type": "number",
+            "description": "PPT: 上邊距（公分），預設 5.0",
+            "default": 5.0
+          }
+        },
+        "required": ["file_path", "image_path"]
+      }
+    },
+    {
+      "name": "insert_table",
+      "description": "在 Word 文檔中插入表格",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "Word 文檔路徑 (.docx)"
+          },
+          "rows": {
+            "type": "integer",
+            "description": "行數",
+            "minimum": 1
+          },
+          "cols": {
+            "type": "integer",
+            "description": "列數",
+            "minimum": 1
+          },
+          "data": {
+            "type": "array",
+            "description": "表格數據（二維陣列）",
+            "items": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          },
+          "position": {
+            "type": "string",
+            "description": "插入位置文字（可選）"
+          }
+        },
+        "required": ["file_path", "rows", "cols"]
+      }
+    },
+    {
+      "name": "batch_replace",
+      "description": "批次替換多個檔案中的文字",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "檔案模式（如 '*.docx', 'reports/*.xlsx'）"
+          },
+          "old_text": {
+            "type": "string",
+            "description": "要替換的文字"
+          },
+          "new_text": {
+            "type": "string",
+            "description": "新文字"
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "是否遞迴搜尋子目錄",
+            "default": false
+          },
+          "output_dir": {
+            "type": "string",
+            "description": "輸出目錄（可選）"
+          },
+          "backup": {
+            "type": "boolean",
+            "description": "是否備份原檔案",
+            "default": false
+          }
+        },
+        "required": ["pattern", "old_text", "new_text"]
+      }
+    },
+    {
+      "name": "execute_command",
+      "description": "通用命令執行接口",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "命令名稱",
+            "enum": ["replace_text", "add_image", "insert_table", "batch_replace"]
+          }
+        },
+        "required": ["command"],
+        "additionalProperties": true
+      }
+    }
+  ],
+  "metadata": {
+    "version": "1.3.0",
+    "llm_friendly": true,
+    "unified_response_format": {
+      "success": "boolean",
+      "operation": "string",
+      "file_type": "string",
+      "result": "object",
+      "message": "string",
+      "error": "string | null"
+    }
+  }
+}
