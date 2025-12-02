@@ -1,6 +1,6 @@
 # Office 文檔編輯工具集
 
-> 強大的 Word 和 PowerPoint 命令列編輯工具  
+> 強大的 Word、PowerPoint 和 Excel 命令列編輯工具  
 > 支援自然語言指令和批次處理
 
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
@@ -12,8 +12,10 @@
 
 這是一套專為自動化文檔編輯而設計的命令列工具，支援：
 
-- ✅ Word文檔 (.docx) 編輯
+- ✅ Word 文檔 (.docx) 編輯
 - ✅ PowerPoint (.pptx) 編輯  
+- ✅ Excel (.xlsx) 編輯 ✨
+- ✅ 批次文字替換  
 - ✅ 批次文字替換
 - ✅ 內容管理和結構調整
 - ✅ AI 助理友好的介面設計
@@ -47,9 +49,13 @@ python src/word_editor.py report.docx replace "2024" "2025"
 # PowerPoint：更新第一張投影片的標題
 python src/ppt_editor.py slides.pptx update-title 1 "新標題"
 
+# Excel：替換所有工作表中的文字
+python src/excel_editor.py data.xlsx replace "舊值" "新值"
+
 # 查看文檔結構
 python src/word_editor.py document.docx list
 python src/ppt_editor.py presentation.pptx list
+python src/excel_editor.py workbook.xlsx list
 ```
 
 ---
@@ -61,22 +67,30 @@ llm-office-io/
 ├── src/                    # 源代碼
 │   ├── word_editor.py      # Word 編輯器
 │   ├── ppt_editor.py       # PowerPoint 編輯器
+│   ├── excel_editor.py     # Excel 編輯器 ✨
+│   ├── constants.py        # 常量定義
+│   ├── __init__.py         # 套件初始化
 │   └── read_docx.py        # Word 讀取工具
 │
 ├── docs/                   # 文檔
 │   ├── requirements.md     # 需求規格書
 │   ├── design.md          # 系統設計文件
-│   └── user_manual.md     # 使用說明
+│   ├── user_manual.md     # 使用說明
+│   ├── excel_editor_guide.md # Excel 編輯器指南 ✨
+│   └── llm_agent_manual.md # AI 助理手冊
 │
 ├── examples/              # 範例腳本
 │   ├── restructure_docx.py # 文檔重構範例
 │   └── enhance_docx.py     # 文檔增強範例
 │
 ├── tests/                 # 測試檔案
+│   ├── test_word_editor.py
+│   ├── test_ppt_editor.py
+│   └── test_excel_editor.py ✨
 │
 ├── README.md              # 本文件
 ├── requirements.txt       # Python 依賴
-└── LLM_AGENT_MANUAL.md   # AI 助理使用手冊
+└── .gitignore
 ```
 
 ---
@@ -103,6 +117,18 @@ llm-office-io/
 | 新增投影片 | `add-slide` | 添加新投影片 |
 | 刪除投影片 | `delete-slide` | 移除投影片 |
 | 設定字體 | `set-font` | 修改字體樣式 |
+
+### Excel 編輯器 (excel_editor.py) ✨
+
+| 功能 | 命令 | 說明 |
+|------|------|------|
+| 列出工作表 | `list` | 顯示所有工作表 |
+| 查看內容 | `view` | 查看工作表資料 |
+| 替換文字 | `replace` | 批量替換文字 |
+| 更新儲存格 | `update-cell` | 修改儲存格值 |
+| 新增行 | `add-row` | 插入新資料行 |
+| 刪除行 | `delete-row` | 移除資料行 |
+| 搜尋儲存格 | `find` | 搜尋特定文字 |
 
 ---
 
@@ -175,14 +201,15 @@ python src/word_editor.py doc.docx delete "待刪除"
 
 ## 📋 功能路線圖
 
-### ✅ 已完成 (v1.0)
+### ✅ 已完成 (v1.1)
 - [x] Word 文檔基本編輯
 - [x] PowerPoint 基本編輯
+- [x] Excel 基本編輯 ✨
 - [x] 命令列介面
 - [x] 完整文檔
+- [x] 單元測試架構
 
 ### 🚧 計劃中 (v2.0)
-- [ ] Excel 支援
 - [ ] 批次處理模式
 - [ ] 圖片和圖表操作
 - [ ] 配置檔支援
@@ -239,8 +266,9 @@ git push origin feature/your-feature
 
 - [python-docx](https://python-docx.readthedocs.io/) - Word 文檔處理
 - [python-pptx](https://python-pptx.readthedocs.io/) - PowerPoint 處理
+- [openpyxl](https://openpyxl.readthedocs.io/) - Excel 處理 ✨
 
 ---
 
 **最後更新**: 2025-12-02  
-**版本**: 1.0.0
+**版本**: 1.1.0
