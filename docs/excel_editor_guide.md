@@ -1,147 +1,391 @@
-# Excel 編輯器使用指南
+# Excel Editor 完整使用指南
 
-## 📖 工具介紹
+## 📖 簡介
 
-`excel_editor.py` 是一個強大的 Excel 互動式編輯工具，讓您可以透過簡單的命令列指令修改 Excel 檔案。
-
-## 🎯 主要功能
-
-### 1. 列出工作表
-顯示所有工作表名稱和基本資訊
-
-```bash
-python src/excel_editor.py data.xlsx list
-```
-
-### 2. 查看工作表內容
-顯示指定工作表的資料
-
-```bash
-# 查看活動工作表（前 10 行）
-python src/excel_editor.py data.xlsx view
-
-# 查看指定工作表
-python src/excel_editor.py data.xlsx view Sheet1
-
-# 指定顯示行數
-python src/excel_editor.py data.xlsx view Sheet1 --max-rows 20
-```
-
-### 3. 替換文字
-在工作表中搜尋並替換文字
-
-```bash
-# 替換所有工作表的文字
-python src/excel_editor.py data.xlsx replace "舊值" "新值"
-
-# 只替換特定工作表
-python src/excel_editor.py data.xlsx replace "舊值" "新值" --sheet Sheet1
-```
-
-### 4. 更新儲存格
-修改指定儲存格的值
-
-```bash
-python src/excel_editor.py data.xlsx update-cell Sheet1 A1 "新值"
-python src/excel_editor.py data.xlsx update-cell Sheet1 B2 "100"
-```
-
-### 5. 新增行
-在工作表中插入新行
-
-```bash
-# 在最後新增行
-python src/excel_editor.py data.xlsx add-row Sheet1 "數據1" "數據2" "數據3"
-
-# 在指定位置插入
-python src/excel_editor.py data.xlsx add-row Sheet1 "數據1" "數據2" --position 2
-```
-
-### 6. 刪除行
-刪除指定行
-
-```bash
-python src/excel_editor.py data.xlsx delete-row Sheet1 5
-```
-
-### 7. 搜尋儲存格
-搜尋包含特定文字的儲存格
-
-```bash
-# 搜尋所有工作表
-python src/excel_editor.py data.xlsx find "關鍵字"
-
-# 只搜尋特定工作表
-python src/excel_editor.py data.xlsx find "關鍵字" --sheet Sheet1
-```
-
-## 💾 輸出設定
-
-預設會覆蓋原檔案，如果要另存新檔：
-
-```bash
-python src/excel_editor.py input.xlsx replace "A" "B" --output output.xlsx
-```
-
-## 📝 使用範例
-
-### 範例 1：批次更新價格
-
-```bash
-# 1. 查看價格表
-python src/excel_editor.py products.xlsx view PriceList
-
-# 2. 將所有價格從 $100 改為 $120
-python src/excel_editor.py products.xlsx replace "$100" "$120" --sheet PriceList
-
-# 3. 更新標題
-python src/excel_editor.py products.xlsx update-cell PriceList A1 "2025 年價格表"
-```
-
-### 範例 2：資料維護
-
-```bash
-# 1. 搜尋待處理項目
-python src/excel_editor.py tasks.xlsx find "待處理"
-
-# 2. 新增新任務
-python src/excel_editor.py tasks.xlsx add-row Tasks "新任務" "高優先級" "2025-12-10"
-
-# 3. 刪除完成的任務（假設在第 3 行）
-python src/excel_editor.py tasks.xlsx delete-row Tasks 3
-```
-
-### 範例 3：報表更新
-
-```bash
-# 1. 列出所有工作表
-python src/excel_editor.py report.xlsx list
-
-# 2. 更新統計數據
-python src/excel_editor.py report.xlsx update-cell Summary B5 "95%"
-
-# 3. 替換報告日期
-python src/excel_editor.py report.xlsx replace "2024-12-01" "2025-12-02"
-```
-
-## ⚠️ 注意事項
-
-1. **備份重要文件** - 修改前建議先備份
-2. **支援格式** - 只支援 `.xlsx` 格式（Excel 2007+）
-3. **儲存格參照** - 使用標準格式如 A1, B2, C3
-4. **不支援功能** - 不支援編輯公式、圖表、巨集
-
-## 🔧 技術細節
-
-### 依賴套件
-
-- **openpyxl** - Excel 檔案操作
-
-### 系統需求
-
-- Python 3.8+
-- Windows / Linux / macOS
+Excel Editor 提供 11 個強大功能，包括工作表管理、格式設定和公式支援。
 
 ---
 
-**最後更新**: 2025-12-02
+## 🚀 快速開始
+
+```python
+from src.excel_editor import ExcelEditor
+
+# 開啟 Excel 檔案
+editor = ExcelEditor("data.xlsx")
+
+# 執行操作
+editor.replace_text("舊值", "新值")
+editor.save("output.xlsx")
+```
+
+---
+
+## 📋 功能列表
+
+### 1. 列出工作表 `list_sheets()`
+
+```python
+# 顯示所有工作表名稱
+editor.list_sheets()
+```
+
+---
+
+### 2. 查看工作表內容 `view_sheet()`
+
+```python
+# 查看活動工作表（前 10 行）
+editor.view_sheet()
+
+# 查看指定工作表
+editor.view_sheet("Sheet1")
+
+# 指定顯示行數
+editor.view_sheet("Sheet1", max_rows=20)
+```
+
+---
+
+### 3. 文字替換 `replace_text()`
+
+```python
+# 替換所有工作表的文字
+count = editor.replace_text("舊值", "新值")
+
+# 只替換特定工作表
+count = editor.replace_text("舊值", "新值", sheet_name="Sheet1")
+```
+
+---
+
+### 4. 更新儲存格 `update_cell()`
+
+```python
+# 更新指定儲存格
+editor.update_cell("Sheet1", "A1", "新值")
+editor.update_cell("財務", "B5", 12000)
+```
+
+---
+
+### 5. 新增行 `add_row()`
+
+```python
+# 在最後新增行
+data = ["產品A", 100, 5000]
+editor.add_row("Sheet1", data)
+
+# 在指定位置插入
+editor.add_row("Sheet1", ["產品B", 200, 8000], position=2)
+```
+
+---
+
+### 6. 刪除行 `delete_row()`
+
+```python
+# 刪除第 5 行
+editor.delete_row("Sheet1", row_number=5)
+```
+
+---
+
+### 7. 搜尋儲存格 `find_cells()`
+
+```python
+# 搜尋所有工作表
+results = editor.find_cells("關鍵字")
+
+# 只搜尋特定工作表
+results = editor.find_cells("關鍵字", sheet_name="Sheet1")
+```
+
+---
+
+### 8. 新增工作表 `add_sheet()` 🆕
+
+```python
+# 在最後新增工作表
+editor.add_sheet("新工作表")
+
+# 在特定位置插入
+editor.add_sheet("Q1資料", position=0)  # 插入到最前面
+```
+
+---
+
+### 9. 刪除工作表 `delete_sheet()` 🆕
+
+```python
+# 刪除工作表
+editor.delete_sheet("舊工作表")
+```
+
+**注意**: 無法刪除唯一的工作表
+
+---
+
+### 10. 設定儲存格格式 `set_cell_format()` 🆕
+
+```python
+# 設定粗體、字體大小
+editor.set_cell_format(
+    sheet_name="Sheet1",
+    cell_ref="A1",
+    bold=True,
+    font_size=14
+)
+
+# 設定背景顏色（16進位）
+editor.set_cell_format(
+    sheet_name="Sheet1",
+    cell_ref="B2",
+    bg_color="FFFF00",  # 黃色
+    alignment="center"
+)
+
+# 完整範例
+editor.set_cell_format(
+    sheet_name="報表",
+    cell_ref="C3",
+    bold=True,
+    font_size=12,
+    bg_color="CCE5FF",  # 淺藍色
+    alignment="right"
+)
+```
+
+**常用顏色**:
+- 黃色: `"FFFF00"`
+- 淺藍: `"CCE5FF"`
+- 淺綠: `"CCFFCC"`
+- 淺紅: `"FFCCCC"`
+- 橙色: `"FFA500"`
+
+**對齊選項**: `'left'`, `'center'`, `'right'`
+
+---
+
+### 11. 設定公式 `set_formula()` 🆕
+
+```python
+# SUM 公式
+editor.set_formula("Sheet1", "D10", "=SUM(D1:D9)")
+
+# AVERAGE 公式
+editor.set_formula("Sheet1", "E10", "=AVERAGE(E1:E9)")
+
+# 其他公式
+editor.set_formula("Sheet1", "F5", "=A5*B5")
+editor.set_formula("Sheet1", "G1", "=IF(A1>100,\"高\",\"低\")")
+```
+
+---
+
+### 12. 儲存檔案 `save()`
+
+```python
+# 覆蓋原檔案
+editor.save()
+
+# 另存新檔
+editor.save("output.xlsx")
+```
+
+---
+
+## 💡 實用範例
+
+### 範例 1: 季度報表製作
+
+```python
+editor = ExcelEditor("report.xlsx")
+
+# 新增 Q1 工作表
+editor.add_sheet("Q1_2025", position=0)
+
+# 設定標題
+editor.update_cell("Q1_2025", "A1", "Q1 2025 財務報表")
+editor.set_cell_format(
+    "Q1_2025", "A1",
+    bold=True,
+    font_size=16,
+    bg_color="4472C4",  # 深藍
+    alignment="center"
+)
+
+# 添加數據
+headers = ["月份", "收入", "支出", "淨利"]
+editor.add_row("Q1_2025", headers)
+
+data = [
+    ["1月", 100000, 60000, 40000],
+    ["2月", 120000, 70000, 50000],
+    ["3月", 115000, 65000, 50000]
+]
+
+for row in data:
+    editor.add_row("Q1_2025", row)
+
+# 設定總計公式
+editor.update_cell("Q1_2025", "A6", "總計")
+editor.set_formula("Q1_2025", "B6", "=SUM(B3:B5)")
+editor.set_formula("Q1_2025", "C6", "=SUM(C3:C5)")
+editor.set_formula("Q1_2025", "D6", "=SUM(D3:D5)")
+
+# 格式化總計行
+for col in ["A6", "B6", "C6", "D6"]:
+    editor.set_cell_format(
+        "Q1_2025", col,
+        bold=True,
+        bg_color="D9E1F2"
+    )
+
+editor.save()
+```
+
+---
+
+### 範例 2: 批次數據更新
+
+```python
+editor = ExcelEditor("products.xlsx")
+
+# 更新所有價格（+10%）
+# 先搜尋所有價格儲存格
+results = editor.find_cells("$", sheet_name="Price List")
+
+for sheet, cell_ref, value in results:
+    if isinstance(value, str) and "$" in value:
+        # 提取數字並增加 10%
+        old_price = float(value.replace("$", ""))
+        new_price = old_price * 1.1
+        editor.update_cell(sheet, cell_ref, f"${new_price:.2f}")
+
+# 更新日期
+editor.replace_text("2024", "2025", sheet_name="Price List")
+
+# 標記為已更新
+editor.update_cell("Price List", "A1", "價格表 (2025年1月更新)")
+editor.set_cell_format(
+    "Price List", "A1",
+    bold=True,
+    bg_color="FFFF00"
+)
+
+editor.save()
+```
+
+---
+
+### 範例 3: 工作表整理
+
+```python
+editor = ExcelEditor("data.xlsx")
+
+# 刪除舊工作表
+old_sheets = ["2022資料", "2023資料", "暫存"]
+for sheet in old_sheets:
+    try:
+        editor.delete_sheet(sheet)
+    except:
+        pass
+
+# 新增當年度工作表
+for quarter in ["Q1", "Q2", "Q3", "Q4"]:
+    sheet_name = f"2025_{quarter}"
+    editor.add_sheet(sheet_name)
+    
+    # 設定標題
+    editor.update_cell(sheet_name, "A1", f"2025 年 {quarter} 資料")
+    editor.set_cell_format(
+        sheet_name, "A1",
+        bold=True,
+        font_size=14,
+        alignment="center"
+    )
+
+editor.save()
+```
+
+---
+
+### 範例 4: 自動化報表格式
+
+```python
+editor = ExcelEditor("monthly_report.xlsx")
+
+# 格式化標題行
+headers = ["A1", "B1", "C1", "D1", "E1"]
+for cell in headers:
+    editor.set_cell_format(
+        "Report", cell,
+        bold=True,
+        font_size=12,
+        bg_color="366092",  # 深藍
+        alignment="center"
+    )
+
+# 格式化數據區域（使用淺色背景）
+for row in range(2, 12):  # 行 2-11
+    bg = "F2F2F2" if row % 2 == 0 else "FFFFFF"  # 斑馬紋
+    for col in ["A", "B", "C", "D", "E"]:
+        cell_ref = f"{col}{row}"
+        editor.set_cell_format(
+            "Report", cell_ref,
+            bg_color=bg,
+            alignment="left"
+        )
+
+# 添加總計行
+editor.set_formula("Report", "E12", "=SUM(E2:E11)")
+editor.set_cell_format(
+    "Report", "E12",
+    bold=True,
+    bg_color="FFD966"  # 黃色
+)
+
+editor.save()
+```
+
+---
+
+## ⚠️ 注意事項
+
+1. **檔案格式**: 僅支援 `.xlsx` 格式
+2. **儲存格參照**: 使用標準格式（A1, B2, C3...）
+3. **行號從 1 開始**: 第一行是 1（不是 0）
+4. **工作表名稱**: 不可重複
+5. **顏色格式**: 使用 6 位 16 進位（如 FFFF00）
+
+---
+
+## 🎨 常用顏色代碼
+
+| 顏色 | 16進位碼 |
+|------|----------|
+| 黃色 | FFFF00 |
+| 橙色 | FFA500 |
+| 紅色 | FF0000 |
+| 粉紅 | FFC0CB |
+| 綠色 | 00FF00 |
+| 淺綠 | CCFFCC |
+| 藍色 | 0000FF |
+| 淺藍 | CCE5FF |
+| 紫色 | 800080 |
+| 灰色 | 808080 |
+| 淺灰 | F2F2F2 |
+
+---
+
+## 🎯 最佳實踐
+
+1. **定期備份**: 操作前備份重要檔案
+2. **測試公式**: 設定公式後檢查計算結果
+3. **一致格式**: 使用統一的格式標準
+4. **批次操作**: 使用迴圈處理重複任務
+
+---
+
+更多範例請參考 [examples/](../examples/) 目錄。
